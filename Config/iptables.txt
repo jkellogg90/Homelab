@@ -1,0 +1,24 @@
+Ubuntu: sudo apt install iptables-persistent
+Redhat: sudo yum install iptables-services
+chkconfig iptables on
+
+#Default deny all inbound IPv4 traffic. Exceptions for jumpboxes. 
+iptables -F
+iptables -A INPUT -i lo -j ACCEPT
+iptables -A OUTPUT -o lo -j ACCEPT
+iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+iptables -I INPUT -p tcp -s JUMPBOXIP --dport 22 -m mac --mac-source JUMPBOXMACADDR -j ACCEPT
+iptables -P INPUT DROP
+iptables -P FORWARD DROP
+iptables-save > /etc/iptables/rules.v4 #Ubuntu
+service iptables save #RHEL
+
+#Default deny all inbound IPv6 traffic.
+ip6tables -F
+ip6tables -A INPUT -i lo -j ACCEPT
+ip6tables -A OUTPUT -o lo -j ACCEPT
+ip6tables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+ip6tables -P INPUT DROP
+ip6tables -P FORWARD DROP
+ip6tables-save > /etc/iptables/rules.v6 #Ubuntu
+service ip6tables save #RHEL
