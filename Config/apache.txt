@@ -1,0 +1,78 @@
+#The following config gets an A+ grade on SSL Labs as of 2/14/2020. This will break connections for older clients. Use with caution.
+
+Enable Modules
+sudo a2enmod ssl
+sudo a2enmod headers
+sudo a2enmod rewrite
+
+vi /etc/apache2/sites-available/website-ssl.conf
+
+<IfModule mod_ssl.c>
+LoadModule headers_module modules/mod_headers.so
+
+<VirtualHost domainname.com:443>
+        ServerName domainname.com
+        ServerAdmin webmaster@localhost
+        DocumentRoot /var/www/html
+		
+#SSL Settings
+SSLEngine On
+SSLProtocol -all +TLSv1.3 +TLSv1.2
+SSLCipherSuite EECDH+AESGCM:EDH+AESGCM
+SSLHonorCipherOrder on
+SSLCompression      off
+SSLSessionTickets   off	
+
+#SSL Cert, Key, and Chain
+SSLCertificateFile /root/certstore/server.crt
+SSLCertificateKeyFile /root/certstore/server.key
+SSLCertificateChainFile /root/certstore/chain.crt
+
+#Logging
+ErrorLog ${APACHE_LOG_DIR}/error.log
+CustomLog ${APACHE_LOG_DIR}/access.log combined
+
+#Secure Headers
+Header always set X-XSS-Protection "1; mode=block"
+Header always append X-Frame-Options DENY
+Header set X-Content-Type-Options nosniff
+Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+Header set Content-Security-Policy "default-src 'self';"
+Header set Referrer-Policy "no-referrer"
+Header set X-Permitted-Cross-Domain-Policies "none"
+Header always edit Set-Cookie ^(.*)$ $1;HttpOnly;Secure
+
+#Disallow TRACE requests 
+TraceEnable off
+
+#Prevent disclosure of inode number, Etag headers, etc. 
+FileETag None
+
+#Disable HTTP 1.0 protocol
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteCond %{THE_REQUEST} !HTTP/1.1$
+RewriteRule .* - [F]
+</IfModule>
+
+<Directory /var/www/html>
+#Disable directory listing and SSI
+Options None
+#Only allow GET and POST requests 
+<LimitExcept GET POST>
+deny from all
+</LimitExcept>
+</Directory>
+
+#Enable SSL Stapling
+SSLUseStapling On
+SSLStaplingCache "shmcb:logs/ssl_stapling(32768)"
+
+</VirtualHost>
+</IfModule>
+
+vi /etc/apache2/conf-enabled/security.conf 
+
+#Prevent version disclosure
+ServerSignature Off
+ServerTokens Prod
