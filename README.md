@@ -47,6 +47,8 @@ This page describes my homelab. My lab is mostly used for learning new technolog
 
 **Jumpbox**: Used for administrating servers and network devices.
 
+**Unifi Controller**: Used for administrating wireless access point
+
 # Cloud Virtual Machines
 jkellogg90.com - I mostly use this for testing my network controls (IPS/FW). 
 
